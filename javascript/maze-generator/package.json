@@ -1,0 +1,10 @@
+{
+  "name": "maze-generator",
+  "preferGlobal": true,
+  "version": "0.0.1",
+  "author": "Priyo Aujla <priyo.aujla@example.com>",
+  "description": "Maze generator",
+  "license": "MIT",
+  "scripts": {},
+  "dependencies": {}
+}
