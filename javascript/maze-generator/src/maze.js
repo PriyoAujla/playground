@@ -1,6 +1,6 @@
 class SquareDimension {
-    constructor(columns) {
-        this.columns = columns;
+    constructor(size) {
+        this.size = size;
     }
 }
 
@@ -57,8 +57,8 @@ class MazeCanvas {
         this.squareDimension = squareDimension;
         const htmlCanvas =  document.createElement("canvas");
         htmlCanvas.id = "Maze";
-        htmlCanvas.width = this.squareDimension.columns * MazeCanvas.sizeOfEachSquare;
-        htmlCanvas.height = this.squareDimension.columns * MazeCanvas.sizeOfEachSquare;
+        htmlCanvas.width = this.squareDimension.size * MazeCanvas.sizeOfEachSquare;
+        htmlCanvas.height = this.squareDimension.size * MazeCanvas.sizeOfEachSquare;
         htmlCanvas.style.position = "absolute";
         htmlCanvas.style.border = "1px solid";
 
@@ -70,12 +70,12 @@ class MazeCanvas {
     render(maze) {
         range(
             0,
-            this.squareDimension.columns,
+            this.squareDimension.size,
             1,
             (row) => {
                 range(
                     0,
-                    this.squareDimension.columns,
+                    this.squareDimension.size,
                     1,
                     (column) => {
                         const location = Location.origin.right(column).bottom(row);
