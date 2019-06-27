@@ -22,23 +22,43 @@ class Maze {
 }
 
 class Location {
+    static origin = new Location(0,0);
 
     constructor(columns, rows) {
         this.columns = columns;
         this.rows = rows;
     }
+
+    right(units = 1) {
+        return new Location(this.columns + units, this.rows);
+    }
+
+    bottom(units = 1) {
+        return new Location(this.columns, this.rows + units);
+    }
+
+    toPoint() {
+        return new Point(this.columns * MazeCanvas.sizeOfEachSquare, this.rows * MazeCanvas.sizeOfEachSquare)
+    }
+}
+
+class Point {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
 }
 
 class MazeCanvas {
 
-    sizeOfEachSquare = 20;
+    static sizeOfEachSquare = 20;
 
     constructor(squareDimension) {
         this.squareDimension = squareDimension;
         const htmlCanvas =  document.createElement("canvas");
         htmlCanvas.id = "Maze";
-        htmlCanvas.width = this.squareDimension.columns * this.sizeOfEachSquare;
-        htmlCanvas.height = this.squareDimension.columns * this.sizeOfEachSquare;
+        htmlCanvas.width = this.squareDimension.columns * MazeCanvas.sizeOfEachSquare;
+        htmlCanvas.height = this.squareDimension.columns * MazeCanvas.sizeOfEachSquare;
         htmlCanvas.style.position = "absolute";
         htmlCanvas.style.border = "1px solid";
 
@@ -50,15 +70,17 @@ class MazeCanvas {
     render(maze) {
         range(
             0,
-            this.squareDimension.columns * this.sizeOfEachSquare,
-            this.sizeOfEachSquare,
+            this.squareDimension.columns,
+            1,
             (row) => {
                 range(
                     0,
-                    this.squareDimension.columns * this.sizeOfEachSquare,
-                    this.sizeOfEachSquare,
+                    this.squareDimension.columns,
+                    1,
                     (column) => {
-                        this.context.rect(column, row, this.sizeOfEachSquare, this.sizeOfEachSquare);
+                        const location = Location.origin.right(column).bottom(row);
+                        const point = location.toPoint();
+                        this.context.rect(point.x, point.y, MazeCanvas.sizeOfEachSquare, MazeCanvas.sizeOfEachSquare);
                         this.context.stroke();
                     })
             }
