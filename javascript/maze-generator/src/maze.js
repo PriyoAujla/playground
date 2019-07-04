@@ -13,11 +13,13 @@ class Maze {
     }
 
     addPath(from, to){
-        this.path[from] = to
+        this.path[from.toString()] = to
     }
 
     hasPath(from, to) {
-        return this.path[from] === to
+        let pathElement = this.path[from.toString()];
+        let pathElement1 = this.path[to.toString()];
+        return (to.equals(pathElement)|| from.equals(pathElement1))
     }
 }
 
@@ -33,12 +35,32 @@ class Location {
         return new Location(this.columns + units, this.rows);
     }
 
-    bottom(units = 1) {
+    down(units = 1) {
         return new Location(this.columns, this.rows + units);
+    }
+
+    up(units = 1) {
+        return new Location(this.columns, this.rows - units);
+    }
+
+    left(units = 1) {
+        return new Location(this.columns - units, this.rows);
     }
 
     toPoint() {
         return new Point(this.columns * MazeCanvas.sizeOfEachSquare, this.rows * MazeCanvas.sizeOfEachSquare)
+    }
+
+    toString() {
+        return `${this.columns},${this.rows}`
+    }
+
+    equals(other) {
+        if(other !== null && other !== undefined) {
+            return this.columns === other.columns && this.rows === other.rows
+        } else {
+            return false
+        }
     }
 }
 
@@ -46,6 +68,22 @@ class Point {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+    }
+
+    right(units = 1) {
+        return new Point(this.x + units, this.y);
+    }
+
+    down(units = 1) {
+        return new Point(this.x, this.y + units);
+    }
+
+    left(units = 1) {
+        return new Point(this.x - units, this.y);
+    }
+
+    up(units = 1) {
+        return new Point(this.x, this.y - units);
     }
 }
 
@@ -78,9 +116,34 @@ class MazeCanvas {
                     this.squareDimension.size,
                     1,
                     (column) => {
-                        const location = Location.origin.right(column).bottom(row);
+                        const location = Location.origin.right(column).down(row);
                         const point = location.toPoint();
-                        this.context.rect(point.x, point.y, MazeCanvas.sizeOfEachSquare, MazeCanvas.sizeOfEachSquare);
+                        this.context.beginPath();
+
+                        const topRightCorner = point.right(MazeCanvas.sizeOfEachSquare);
+                        if(!maze.hasPath(location, location.up())) {
+                            this.context.moveTo(point.x, point.y);
+                            this.context.lineTo(topRightCorner.x, topRightCorner.y);
+                        }
+
+                        const bottomRightCorner = topRightCorner.down(MazeCanvas.sizeOfEachSquare);
+                        if(!maze.hasPath(location, location.right())) {
+                            this.context.moveTo(topRightCorner.x, topRightCorner.y);
+                            this.context.lineTo(bottomRightCorner.x, bottomRightCorner.y);
+                        }
+
+                        const bottomLeftCorner = bottomRightCorner.left(MazeCanvas.sizeOfEachSquare);
+                        if(!maze.hasPath(location, location.down())) {
+                            this.context.moveTo(bottomRightCorner.x, bottomRightCorner.y);
+                            this.context.lineTo(bottomLeftCorner.x, bottomLeftCorner.y);
+                        }
+
+                        const topLeftCorner = bottomLeftCorner.up(MazeCanvas.sizeOfEachSquare);
+                        if(!maze.hasPath(location, location.left())) {
+                            this.context.moveTo(bottomLeftCorner.x, bottomLeftCorner.y);
+                            this.context.lineTo(topLeftCorner.x, topLeftCorner.y);
+                        }
+
                         this.context.stroke();
                     })
             }
