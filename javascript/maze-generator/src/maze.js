@@ -9,19 +9,19 @@ class Maze {
     path = new Set();
 
     addPath(from, to){
-        this.path.add(this.idOf(from, to));
+        this.path.add(this.idOfPath(from, to));
     }
 
     hasPath(from, to) {
-        return this.path.has(this.idOf(from, to));
+        return this.path.has(this.idOfPath(from, to));
     }
 
-    idOf(from, to) {
+    idOfPath(from, to) {
         let id;
         if(from.columns <= to.columns && from.rows <= to.rows) {
-            id = `${from.toString()}->${to.toString()}`
+            id = `${from.toString()}<->${to.toString()}`
         } else {
-            id = `${to.toString()}->${from.toString()}`
+            id = `${to.toString()}<->${from.toString()}`
         }
         return id
     }
@@ -31,10 +31,7 @@ class Maze {
         const mulberry = mulberry32(seed);
         const random = () => Math.floor(mulberry() * Math.pow(10, 16));
 
-        let current = new Location(
-            random() % squareDimension.size,
-            random() % squareDimension.size
-        );
+        let current = new Location(random() % squareDimension.size, random() % squareDimension.size);
         const visited = {};
         const stack = [];
 
@@ -73,12 +70,15 @@ class Maze {
             location.left()
         )
             .filter((neighbour) => {
-                return neighbour.columns >= 0 && neighbour.rows >= 0 &&
-                    neighbour.columns <= squareDimension.size - 1 && neighbour.rows <= squareDimension.size - 1
+                return visited[neighbour] === undefined
             })
             .filter((neighbour) => {
-                return visited[neighbour] === undefined
+                return neighbour.columns >= 0 &&
+                    neighbour.rows >= 0 &&
+                    neighbour.columns <= squareDimension.size - 1 &&
+                    neighbour.rows <= squareDimension.size - 1
             });
+
     }
 }
 
@@ -179,10 +179,6 @@ class MazeCanvas {
                         const location = Location.origin.right(column).down(row);
                         const point = location.toPoint();
                         this.context.beginPath();
-
-                        if(location.equals(new Location(1, 1)) || location.equals(new Location(1, 0)) ) {
-                            console.log();
-                        }
 
                         const topRightCorner = point.right(MazeCanvas.sizeOfEachSquare);
                         if(!maze.hasPath(location, location.up()) && !location.equals(new Location(0,0))) {
