@@ -6,20 +6,79 @@ class SquareDimension {
 
 class Maze {
 
-    path = {};
-
-    constructor(squareDimension) {
-        this.squareDimension = squareDimension;
-    }
+    path = new Set();
 
     addPath(from, to){
-        this.path[from.toString()] = to
+        this.path.add(this.idOf(from, to));
     }
 
     hasPath(from, to) {
-        let pathElement = this.path[from.toString()];
-        let pathElement1 = this.path[to.toString()];
-        return (to.equals(pathElement)|| from.equals(pathElement1))
+        return this.path.has(this.idOf(from, to));
+    }
+
+    idOf(from, to) {
+        let id;
+        if(from.columns <= to.columns && from.rows <= to.rows) {
+            id = `${from.toString()}->${to.toString()}`
+        } else {
+            id = `${to.toString()}->${from.toString()}`
+        }
+        return id
+    }
+
+    static create(seed, squareDimension) {
+        const maze = new Maze();
+        const mulberry = mulberry32(seed);
+        const random = () => Math.floor(mulberry() * Math.pow(10, 16));
+
+        let current = new Location(
+            random() % squareDimension.size,
+            random() % squareDimension.size
+        );
+        const visited = {};
+        const stack = [];
+
+        visited[current] = true;
+        stack.push(current);
+        while(stack.length > 0) {
+            const unvisitedNeighbours = this.findUnvisitedNeighbours(current, visited, squareDimension);
+
+            if(unvisitedNeighbours.length === 1)    {
+                const chosenNeighbour = unvisitedNeighbours.pop();
+                maze.addPath(current, chosenNeighbour);
+                stack.push(current);
+                current = chosenNeighbour;
+                visited[current] = true;
+            }
+            else if(unvisitedNeighbours.length > 1) {
+                const chosenNeighbour = unvisitedNeighbours[(random() % unvisitedNeighbours.length)];
+                maze.addPath(current, chosenNeighbour);
+                stack.push(current);
+                current = chosenNeighbour;
+                visited[current] = true;
+            }
+            else {
+                current = stack.pop();
+            }
+        }
+
+        return maze
+    }
+
+    static findUnvisitedNeighbours(location, visited, squareDimension) {
+        return Array.of(
+            location.up(),
+            location.right(),
+            location.down(),
+            location.left()
+        )
+            .filter((neighbour) => {
+                return neighbour.columns >= 0 && neighbour.rows >= 0 &&
+                    neighbour.columns <= squareDimension.size - 1 && neighbour.rows <= squareDimension.size - 1
+            })
+            .filter((neighbour) => {
+                return visited[neighbour] === undefined
+            });
     }
 }
 
@@ -52,7 +111,7 @@ class Location {
     }
 
     toString() {
-        return `${this.columns},${this.rows}`
+        return `column:${this.columns},row:${this.rows}`
     }
 
     equals(other) {
@@ -98,7 +157,8 @@ class MazeCanvas {
         htmlCanvas.width = this.squareDimension.size * MazeCanvas.sizeOfEachSquare;
         htmlCanvas.height = this.squareDimension.size * MazeCanvas.sizeOfEachSquare;
         htmlCanvas.style.position = "absolute";
-        htmlCanvas.style.border = "1px solid";
+        htmlCanvas.style.border = "none";
+
 
         document.getElementsByTagName("body")[0].appendChild(htmlCanvas);
 
@@ -120,8 +180,12 @@ class MazeCanvas {
                         const point = location.toPoint();
                         this.context.beginPath();
 
+                        if(location.equals(new Location(1, 1)) || location.equals(new Location(1, 0)) ) {
+                            console.log();
+                        }
+
                         const topRightCorner = point.right(MazeCanvas.sizeOfEachSquare);
-                        if(!maze.hasPath(location, location.up())) {
+                        if(!maze.hasPath(location, location.up()) && !location.equals(new Location(0,0))) {
                             this.context.moveTo(point.x, point.y);
                             this.context.lineTo(topRightCorner.x, topRightCorner.y);
                         }
@@ -133,7 +197,7 @@ class MazeCanvas {
                         }
 
                         const bottomLeftCorner = bottomRightCorner.left(MazeCanvas.sizeOfEachSquare);
-                        if(!maze.hasPath(location, location.down())) {
+                        if(!maze.hasPath(location, location.down()) && !location.equals(new Location(19,19))) {
                             this.context.moveTo(bottomRightCorner.x, bottomRightCorner.y);
                             this.context.lineTo(bottomLeftCorner.x, bottomLeftCorner.y);
                         }
@@ -172,7 +236,16 @@ function range(start = 0, end = 0, step = 1, block) {
 
     let squareDimension = new SquareDimension(20);
     const mazeCanvas = new MazeCanvas(squareDimension);
-    const maze = new Maze(squareDimension);
-    mazeCanvas.render(maze)
-
+    const maze = Maze.create(100, squareDimension);
+    mazeCanvas.render(maze);
 })();
+
+// https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
+function mulberry32(a) {
+    return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
