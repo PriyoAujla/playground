@@ -221,7 +221,7 @@ class MazeCanvas {
     renderWalk(theWalk) {
         theWalk.forEach((location) => {
             this.context.beginPath();
-            this.context.fillStyle = "#cbab83";
+            this.context.fillStyle = "#b78b54";
 
             const point = location.toPoint();
             const halfOfSquareSize = Math.floor(MazeCanvas.sizeOfEachSquare / 2);
@@ -307,7 +307,7 @@ class MazeWalker {
 // main
 (function() {
 
-    let squareDimension = new SquareDimension(50);
+    let squareDimension = new SquareDimension(20);
     const mazeCanvas = new MazeCanvas(squareDimension);
     const maze = Maze.create(600, squareDimension);
     mazeCanvas.render(maze);
