@@ -8,6 +8,10 @@ class Maze {
 
     path = new Set();
 
+    constructor(squareDimension) {
+        this.squareDimension = squareDimension;
+    }
+
     addPath(from, to){
         this.path.add(this.idOfPath(from, to));
     }
@@ -27,7 +31,7 @@ class Maze {
     }
 
     static create(seed, squareDimension) {
-        const maze = new Maze();
+        const maze = new Maze(squareDimension);
         const mulberry = mulberry32(seed);
         const random = () => Math.floor(mulberry() * Math.pow(10, 16));
 
@@ -121,6 +125,10 @@ class Location {
             return false
         }
     }
+
+    isValid() {
+        return this.columns >= 0 && this.rows >= 0;
+    }
 }
 
 class Point {
@@ -193,7 +201,7 @@ class MazeCanvas {
                         }
 
                         const bottomLeftCorner = bottomRightCorner.left(MazeCanvas.sizeOfEachSquare);
-                        if(!maze.hasPath(location, location.down()) && !location.equals(new Location(19,19))) {
+                        if(!maze.hasPath(location, location.down()) && !location.equals(new Location(this.squareDimension.size - 1,this.squareDimension.size - 1))) {
                             this.context.moveTo(bottomRightCorner.x, bottomRightCorner.y);
                             this.context.lineTo(bottomLeftCorner.x, bottomLeftCorner.y);
                         }
@@ -208,6 +216,25 @@ class MazeCanvas {
                     })
             }
         );
+    }
+
+    renderWalk(theWalk) {
+        theWalk.forEach((location) => {
+            this.context.beginPath();
+            this.context.fillStyle = "#cbab83";
+
+            const point = location.toPoint();
+            const halfOfSquareSize = Math.floor(MazeCanvas.sizeOfEachSquare / 2);
+            const middleOfSquare = point
+                .right(halfOfSquareSize)
+                .down(halfOfSquareSize);
+
+            const sizeOfBreadcrumb =  Math.floor(MazeCanvas.sizeOfEachSquare / 8);
+            this.context.moveTo(middleOfSquare.x, middleOfSquare.y);
+            this.context.arc(middleOfSquare.x, middleOfSquare.y, sizeOfBreadcrumb, 0, Math.PI * 2, true);
+
+            this.context.fill();
+        })
     }
 }
 
@@ -226,14 +253,72 @@ function range(start = 0, end = 0, step = 1, block) {
     }
 }
 
+class MazeWalker {
+
+    constructor(start, end, maze) {
+        this.start = start;
+        this.end = end;
+        this.maze = maze;
+    }
+
+    walk(seed) {
+        const mulberry = mulberry32(seed);
+        const random = () => Math.floor(mulberry() * Math.pow(10, 16));
+
+        let current = this.start;
+        let visited = {};
+        let breadcrumbs = []; // So I can backtrack
+        let circuitBreaker = 0;
+
+        visited[current] = true;
+        while(!this.end.equals(current)) {
+            const possibleMoves = Array.of(
+                current.up(),
+                current.right(),
+                current.down(),
+                current.left(),
+            ).filter((location)=> {
+                return location.isValid() &&
+                    this.maze.hasPath(current, location) &&
+                    location.columns <= this.maze.squareDimension.size - 1 &&
+                    location.rows <= this.maze.squareDimension.size - 1 &&
+                    visited[location] === undefined
+            });
+
+            if(possibleMoves.length > 0) {
+                const locationToMoveTo = possibleMoves[random() % possibleMoves.length];
+                breadcrumbs.push(current);
+                current = locationToMoveTo;
+                visited[locationToMoveTo] = true;
+            } else {
+                current = breadcrumbs.pop();
+            }
+
+            circuitBreaker++;
+        }
+        breadcrumbs.push(current);
+
+        return breadcrumbs;
+
+    }
+}
+
 
 // main
 (function() {
 
-    let squareDimension = new SquareDimension(20);
+    let squareDimension = new SquareDimension(50);
     const mazeCanvas = new MazeCanvas(squareDimension);
-    const maze = Maze.create(100, squareDimension);
+    const maze = Maze.create(600, squareDimension);
     mazeCanvas.render(maze);
+
+    let start = new Location(0,0);
+    let exit = new Location(squareDimension.size -1, squareDimension.size -1);
+    const mazeWalker = new MazeWalker(start, exit, maze);
+    const theWalk = mazeWalker.walk(500);
+
+    mazeCanvas.renderWalk(theWalk)
+
 })();
 
 // https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript
