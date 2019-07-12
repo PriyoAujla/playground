@@ -307,9 +307,9 @@ class MazeWalker {
 // main
 (function() {
 
-    let squareDimension = new SquareDimension(20);
+    let squareDimension = new SquareDimension(200);
     const mazeCanvas = new MazeCanvas(squareDimension);
-    const maze = Maze.create(600, squareDimension);
+    const maze = Maze.create(100, squareDimension);
     mazeCanvas.render(maze);
 
     let start = new Location(0,0);
