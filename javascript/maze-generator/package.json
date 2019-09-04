@@ -5,6 +5,11 @@
   "author": "Priyo Aujla <priyo.aujla@example.com>",
   "description": "Maze generator",
   "license": "MIT",
-  "scripts": {},
-  "dependencies": {}
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
 }
